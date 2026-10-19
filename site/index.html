@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    // Apply saved theme and design skin before first paint (?skin=alt|classic overrides and is remembered)
+    (function () { try { var r = document.documentElement, q = new URLSearchParams(location.search).get("skin");
+      var t = localStorage.getItem("odp-theme"); if (t) r.dataset.theme = t;
+      if (q) localStorage.setItem("odp-skin", q);
+      if ((q || localStorage.getItem("odp-skin")) === "alt") r.dataset.skin = "alt"; } catch (e) {} })();
+  </script>
+  <title>Fall Colour Watch</title>
+  <meta name="description" content="When the leaves peak in Greater Victoria, Vancouver and Toronto: a forecast for nearly 800,000 street trees, a fall-colour tier list, day trips, and 25 years of satellite autumns, built from open data." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍁</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;550;600;650;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Courier+Prime:wght@400;700&family=Fraunces:opsz,wght,SOFT,WONK@9..144,400..900,0..100,0..1&family=Jost:wght@400;500;600&family=Special+Elite&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./src/shared/theme.css" />
+  <link rel="stylesheet" href="./src/foliage/foliage.css" />
+  <link rel="stylesheet" href="./src/foliage/skin.css" />
+</head>
+<body class="foliage">
+  <header class="topbar">
+    <span class="title">Fall Colour Watch</span>
+    <span class="spacer"></span>
+    <button class="skin-btn" id="skin" type="button" data-skin-name="Kodachrome"></button>
+    <button class="icon-btn" id="theme" type="button"></button>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="eyebrow" id="season-label">Autumn forecast</div>
+        <h1 class="hero-title">When will the leaves peak?</h1>
+        <div class="controls-row region-row">
+          <div class="seg" id="cities" role="group" aria-label="City"></div>
+        </div>
+        <div class="hero-grid">
+          <div class="hero-main card">
+            <div class="label" id="hero-label">Peak colour</div>
+            <div class="hero-figure" id="hero-date">—</div>
+            <p class="hero-sub" id="hero-sub"></p>
+            <div class="season-bar" id="season-bar" aria-hidden="true"></div>
+          </div>
+          <div class="grid cols-2 hero-stats" id="stats"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section class="block">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Every street tree</div>
+            <h2>Scrub through autumn</h2>
+            <p>Each leaf is a city-owned deciduous tree, drawn in its species' autumn colour once it's forecast to turn, and faded once it's forecast to be bare. Zoomed out, each square shows the share of trees in colour.</p>
+          </div>
+        </div>
+        <div class="map-shell card">
+          <div class="map-toolbar">
+            <button class="play" id="play" type="button" aria-label="Play through the season">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>
+            </button>
+            <div class="slider-wrap">
+              <div class="slider-date"><b id="slider-date">—</b> <span id="slider-note" class="note"></span></div>
+              <div id="ribbon" class="ribbon chart"></div>
+              <input type="range" id="slider" min="244" max="349" step="1" aria-label="Date" />
+            </div>
+          </div>
+          <div class="map-body">
+            <div id="map" class="map"></div>
+            <aside class="map-side">
+              <div class="side-block">
+                <div class="side-title">Leaf stage</div>
+                <div class="stage-legend" id="stage-legend"></div>
+              </div>
+              <div class="side-block">
+                <div class="side-title">Show tiers</div>
+                <div class="chips" id="tier-chips"></div>
+              </div>
+              <div class="side-block">
+                <div class="side-title">Trees</div>
+                <div id="tree-list"></div>
+              </div>
+              <div class="side-block">
+                <label class="toggle"><input type="checkbox" id="show-sightings" /> <span>Recent iNaturalist photos</span></label>
+              </div>
+              <div class="side-block streets">
+                <div class="side-title">Most colourful streets on this date</div>
+                <ol id="streets"></ol>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIER LIST -->
+    <section class="block">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">The fall colour tier list</div>
+            <h2>Which trees are worth the walk?</h2>
+            <p id="tiers-sub"></p>
+          </div>
+        </div>
+        <div class="tiers card" id="tiers"></div>
+        <p class="note" style="margin-top:8px">Tiers are my editorial ranking of how intense, varied and long-lasting each tree's autumn colour is. Photos are iNaturalist observations of that species in autumn colour, taken by the credited observer, not the exact tree.</p>
+      </div>
+    </section>
+
+    <!-- CALENDAR + THIS SEASON -->
+    <section class="block">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Forecast</div>
+            <h2>The colour calendar</h2>
+            <p>When each of the city's most common trees should turn, peak and drop, from this season's forecast and how each species times its colour relative to the canopy as a whole.</p>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3 class="card-title" id="cal-title">Colour window by species</h3>
+            <div class="legend" id="cal-legend"></div>
+            <div class="chart" id="calendar"></div>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Warm Septembers delay autumn</h3>
+            <p class="note card-sub" id="race-sub">Each dot is one autumn since 2001: how warm September was, against how late the canopy turned.</p>
+            <div class="legend" id="race-legend"></div>
+            <div class="chart" id="race"></div>
+            <p class="note" id="check-note"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DAY TRIPS -->
+    <section class="block">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Day trips</div>
+            <h2 id="trips-title">Where's the colour this weekend?</h2>
+            <p id="trips-sub">Typical peak from 25 autumns of satellite data, and where each place stands this year.</p>
+          </div>
+        </div>
+        <div class="trips" id="trips"></div>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="block">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">25 autumns from space</div>
+            <h2 id="history-title">Is autumn arriving later?</h2>
+            <p>NASA's MODIS satellites have measured the day each canopy loses half its summer greenness every year since 2001. Each dot is one autumn; the line is the model replaying that year's weather.</p>
+          </div>
+          <div class="seg" id="history-sites" role="group" aria-label="Place"></div>
+        </div>
+        <div class="card">
+          <div class="legend" id="history-legend"></div>
+          <div class="chart" id="history"></div>
+          <p class="note" id="history-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODEL CARD -->
+    <section class="block">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">Model card</div>
+            <h2>How good is the forecast?</h2>
+            <p>Every number here is out-of-sample: each autumn is predicted by a model fitted without it (leave-one-year-out), and compared with two simple baselines.</p>
+          </div>
+        </div>
+        <div class="grid cols-2">
+          <div class="card">
+            <h3 class="card-title">Error by place</h3>
+            <p class="note card-sub">Average miss in days. Lower is better.</p>
+            <div class="table-scroll" id="cv-table"></div>
+          </div>
+          <div class="card">
+            <h3 class="card-title">Predicted vs observed</h3>
+            <p class="note card-sub">Each dot is one place and year, predicted without seeing that year.</p>
+            <div class="chart" id="scatter"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SIGHTINGS -->
+    <section class="block">
+      <div class="wrap">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow">On the ground</div>
+            <h2>Colour spotted this month</h2>
+            <p id="sightings-sub">Recent iNaturalist photos of trees in autumn colour near the city.</p>
+          </div>
+        </div>
+        <div class="sightings" id="sightings"></div>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="wrap">
+        <div class="grid cols-2 method">
+          <div class="card prose">
+            <h3>Method</h3>
+            <p><b>When autumn happens.</b> NASA's MODIS land-surface phenology product (MCD12Q2) gives, for every 500 m pixel and year since 2001, the day the canopy has lost half its seasonal greenness. I take the median over a 5 × 5 km window around each place.</p>
+            <p><b>Timing model.</b> Each place's typical date, shifted by how warm its September was: one slope, shared by every place, of about 1.8 days later per °C. I tested several candidates by leaving each year out. A cold-degree-day senescence model, August or late-summer temperature windows, and a linear trend all did no better than the typical date; September warmth did. Weather is ERA5 reanalysis via Open-Meteo.</p>
+            <p><b>This season.</b> Once September is over it is known. Before that, the rest of the month is filled in from each past year. The model's own out-of-sample errors set the range, so it reflects how good the model really is.</p>
+            <p><b>From satellite to street.</b> iNaturalist observers annotate trees as green, coloured or leafless. Aligning those observations on each year's green-down date places the colour window (turning → peak → bare) around it, and shows which species go early or late. Species with few observations fall back on horticultural timing, blended by sample size.</p>
+          </div>
+          <div class="card prose">
+            <h3>Honest limitations</h3>
+            <ul id="limitations"></ul>
+            <h3 style="margin-top:18px">Data sources</h3>
+            <ul class="sources">
+              <li><a href="https://opendata.vancouver.ca/explore/dataset/public-trees/">City of Vancouver: Public trees</a> (Open Government Licence – Vancouver)</li>
+              <li><a href="https://opendata.victoria.ca/">City of Victoria: Tree species</a> (Open Government Licence – Victoria)</li>
+              <li><a href="https://gis.esquimalt.ca/arcgis/rest/services/Services/Trees/MapServer">Township of Esquimalt: public Tree Map service</a> (published for public use; no licence stated)</li>
+              <li><a href="https://open.toronto.ca/dataset/street-tree-data/">City of Toronto: Street Tree Data</a> (Open Government Licence – Toronto)</li>
+              <li><a href="https://lpdaac.usgs.gov/products/mcd12q2v061/">NASA MODIS MCD12Q2 v6.1</a> via the <a href="https://modis.ornl.gov/data/modis_webservice.html">ORNL DAAC subset service</a></li>
+              <li>Weather: ERA5 (Copernicus) and forecast models via <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0)</li>
+              <li><a href="https://www.inaturalist.org/">iNaturalist</a> observations via the public API; photos only where the observer chose a Creative Commons licence, credited on each card</li>
+              <li>Basemap © <a href="https://openfreemap.org">OpenFreeMap</a>, © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a></li>
+            </ul>
+            <p class="note" id="generated"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="site"><div class="wrap">Fall Colour Watch is part of an open-data portfolio. The forecast refreshes daily through the season.</div></footer>
+  <script type="module" src="./src/foliage/main.js"></script>
+</body>
+</html>
