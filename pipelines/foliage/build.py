@@ -1,4 +1,4 @@
-"""Fall Colour Watch: autumn timing model, this season's forecast, and the files the page reads.
+"""Fall Foliage Watch: autumn timing model, this season's forecast, and the files the page reads.
 
   python -m pipelines.foliage.build
 

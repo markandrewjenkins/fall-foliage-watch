@@ -1,4 +1,4 @@
-"""Download raw inputs for Fall Colour Watch.
+"""Download raw inputs for Fall Foliage Watch.
 
   python -m pipelines.foliage.fetch [trees|inat|photos|modis|weather|daily|all]
 

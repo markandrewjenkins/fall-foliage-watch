@@ -1,4 +1,4 @@
-// "Kodachrome" skin extras for Fall Colour Watch: a 1970s autumn road trip told through slide film.
+// "Kodachrome" skin extras for Fall Foliage Watch: a 1970s autumn road trip told through slide film.
 // - a slide-projector control strip under the header (tray counter wheels + live readouts)
 // - day-trip cards decorated as postcards (stamp + circular postmark)
 // - a one-shot projector "click-clack" lamp flicker on load (skipped under reduced motion)

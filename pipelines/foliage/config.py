@@ -1,4 +1,4 @@
-"""Fall Colour Watch configuration."""
+"""Fall Foliage Watch configuration."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]

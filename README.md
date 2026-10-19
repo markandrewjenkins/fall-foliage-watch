@@ -1,8 +1,8 @@
-# Fall Colour Watch
+# Fall Foliage Watch
 
 Fall-colour forecast for ~800k street trees, a colour tier list, day trips and 25 satellite autumns. Region: Greater Victoria, Vancouver, Toronto & Ontario.
 
-**Live dashboard: https://markandrewjenkins.github.io/fall-colour-watch/**
+**Live dashboard: https://markandrewjenkins.github.io/fall-foliage-watch/**
 
 Built only on free, open government and citizen-science data. A Python pipeline fetches and models the data,
 and a static Vite + d3 + MapLibre page presents it. GitHub Actions refreshes everything daily and publishes it
