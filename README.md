@@ -15,8 +15,7 @@ to GitHub Pages.
 - **Street-tree colour:** iNaturalist "Leaves" annotations (green / coloured / leafless) are aligned on each year's green-down. They give when colour starts, how widely trees of one species vary (±15 days), and per-species shifts shrunk toward horticultural priors. Leaf fall is set ~24 days after each tree's colour onset (ground phenology), because people rarely photograph bare trees. The page shows observers' last-three-weeks share against the model's as a live check.
 - **Map:** ~800k deciduous trees from the Victoria, Esquimalt, Vancouver and Toronto inventories, split into ~1 km JSON tiles that load as you pan, with species-mix squares when zoomed out. A searchable checklist picks individual species (tier chips act as presets), and the squares fade where few of the chosen trees grow.
 - **Day trips:** in a closed forest canopy the satellite's half-way green-down falls close to peak colour, so trip cards use it directly.
-
-All data is published under open licences (OGL-Canada, OGL-Vancouver, OGL-Victoria, OGL-Toronto; NASA data is public domain). iNaturalist observations remain © their observers.
+- **Trip planner:** walk, bike or drive routes through the trees in colour on the chosen date, in Victoria, Vancouver and Toronto. Routes favour road segments with more selected species showing colour per 100 m, and include a loop builder and GPX / Google Maps export. The ready-made routes follow the streets most densely lined with S- and A-tier colour trees.
 
 ## Design
 
@@ -29,6 +28,7 @@ button in the top bar or with `?skin=alt` / `?skin=classic` in the URL. Each has
 python -m venv .venv && .venv/Scripts/pip install -r requirements.txt   # macOS/Linux: .venv/bin/pip
 .venv/Scripts/python -m pipelines.foliage.fetch daily
 .venv/Scripts/python -m pipelines.foliage.build
+.venv/Scripts/python -m pipelines.foliage.trips
 cd site && npm ci && npm run dev
 ```
 

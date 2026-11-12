@@ -181,3 +181,10 @@ body.foliage .topbar { background: color-mix(in oklab, var(--page) 85%, transpar
 .prose b { color: var(--ink); font-weight: 600; }
 .sources a { color: var(--ink); }
 table.data tr.chosen td { background: var(--accent-wash); font-weight: 600; }
+
+/* trip planner in the map side panel */
+.planner-box > summary { cursor: pointer; list-style: none; font-size: 13px; color: var(--ink); }
+.planner-box > summary::-webkit-details-marker { display: none; }
+.planner-box .pl-title:empty { display: none; }
+.planner-box { border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+body.foliage { --route: #2563eb; }

@@ -3,6 +3,7 @@ import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { initTheme, initSkin, cssVar, tooltip, el, tipRow, loadJSON, fmtInt, treeList } from "../shared/ui.js";
 import { skinData } from "./skin.js";
+import { createPlanner } from "../shared/planner.js";
 
 const DATA = "./data/foliage/";
 const MAP_STYLE = { light: "https://tiles.openfreemap.org/styles/positron", dark: "https://tiles.openfreemap.org/styles/dark" };
@@ -15,7 +16,7 @@ const isDark = initTheme(document.getElementById("theme"));
 initSkin(document.getElementById("skin"));
 const tip = tooltip();
 
-let F, map;
+let F, map, planner, trips = {};
 const state = { city: "toronto", doy: 285, sp: new Set(), playing: false, historySite: null };   // sp: species shown on the map
 const chunks = new Map();       // "city/ix_iy" -> rows
 let index = {};                 // city -> tile index
@@ -140,6 +141,15 @@ async function init() {
   document.getElementById("play").addEventListener("click", togglePlay);
   document.getElementById("show-sightings").addEventListener("change", updateMapLayers);
   initMap();
+  trips = await loadJSON(`${DATA}trips.json`).catch(() => ({}));
+  planner = createPlanner({
+    host: document.getElementById("planner"), map, title: "", scoreLabel: "Colour", clickToAdd: false, initialMode: "foot",
+    graphUrl: (city, mode) => `${DATA}trip_${city}_${mode}.json`,
+    scoreFor: (G) => colourEdges(G),
+    presetsFor: (city, mode) => tripPresets(city, mode),
+    describe: (r, G) => { const [n, tot] = colourAlong(G, r.steps); return [["🍁 Trees in colour along the way", fmtInt.format(Math.round(n))], ["Street trees passed", fmtInt.format(tot)]]; },
+    ignoreClicksOn: ["trees", "trees-icons", "sightings"],
+  });
   setCity(state.city, { initial: true });
   document.getElementById("generated").textContent = `Data refreshed ${new Date(F.generated).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}`;
   let raf, lastW = 0;
@@ -161,6 +171,7 @@ const presentSp = (pred = () => true) => F.species.filter((s) => (F.cities[state
 const allOn = (ids) => ids.length > 0 && ids.every((i) => state.sp.has(i));
 let tierChips = [], allChip, list;
 function syncFilters() {
+  replanSoon();
   allChip?.setAttribute("aria-pressed", String(allOn(presentSp())));
   tierChips.forEach(([t, chip]) => chip.setAttribute("aria-pressed", String(allOn(presentSp((s) => s.tier === t)))));
   list?.paint();
@@ -228,6 +239,8 @@ function setCity(k, { initial = false } = {}) {
   syncFilters();
   buildHistoryButtons(sites);
   skinData({ city: k });
+  document.getElementById("planner-box").hidden = !trips[k];
+  if (trips[k] && planner) planner.setCity(k);
 }
 
 function setDoy(d) {
@@ -238,6 +251,36 @@ function setDoy(d) {
   renderStreets();
   renderRibbonPlayhead();
   renderCalendarPlayhead();
+  replanSoon();
+}
+let replanRaf;
+function replanSoon() { if (!planner?.graph) return; cancelAnimationFrame(replanRaf); replanRaf = requestAnimationFrame(() => planner.rescore()); }
+
+// ------------------------------------------------------------------ trip planner scoring
+// Each road segment carries the street trees beside it, by species. On the chosen date a segment's value is the
+// number of selected trees showing colour per 100 m, squashed to 0–1.
+function colourAlongEdge(G, e) {
+  const sp = G.extra.sparse.trees;
+  let n = 0;
+  for (let k = sp.off[e]; k < sp.off[e + 1]; k++) if (state.sp.has(sp.id[k])) n += sp.n[k] * amount(sp.id[k], state.doy);
+  return n;
+}
+function colourEdges(G) {
+  const s = new Float32Array(G.E);
+  for (let e = 0; e < G.E; e++) s[e] = 1 - Math.exp(-(colourAlongEdge(G, e) / Math.max(G.len[e], 30)) * 100 / 3);
+  return s;
+}
+function colourAlong(G, steps) {
+  const sp = G.extra.sparse.trees;
+  let n = 0, tot = 0;
+  for (const [e] of steps) { n += colourAlongEdge(G, e); for (let k = sp.off[e]; k < sp.off[e + 1]; k++) if (state.sp.has(sp.id[k])) tot += sp.n[k]; }
+  return [n, tot];
+}
+function tripPresets(city, mode) {
+  const G = planner?.graph;
+  const list = (trips[city]?.presets || []).filter((p) => p.steps[mode]).map((p) => ({ id: p.id, name: p.name, waypoints: p.waypoints,
+    steps: p.steps[mode], n: G ? colourAlong(G, p.steps[mode])[0] : 0 })).sort((a, b) => b.n - a.n);
+  return list.map((p, i) => ({ ...p, tier: i === 0 && p.n >= 20 ? "S" : p.n >= 20 ? "A" : "B", meta: `${fmtInt.format(Math.round(p.n))} in colour` }));
 }
 function togglePlay() {
   state.playing = !state.playing;
@@ -422,7 +465,7 @@ function initMap() {
       el("div", { class: "t-title", style: { marginTop: "4px" } }, "Zoom in to see each tree")));
   });
   map.on("mouseleave", "cells", () => tip.hide());
-  map.on("click", "cells", (e) => { if (map.getZoom() < TREE_ZOOM) map.flyTo({ center: e.lngLat, zoom: TREE_ZOOM + 1.2 }); });
+  map.on("click", "cells", (e) => { if (!planner?.armed && map.getZoom() < TREE_ZOOM) map.flyTo({ center: e.lngLat, zoom: TREE_ZOOM + 1.2 }); });
   for (const evt of ["click", "mousemove"]) {
     map.on(evt, "sightings", (e) => {
       const p = e.features[0].properties;
